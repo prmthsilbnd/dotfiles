@@ -14,6 +14,7 @@ Symlink managed dotfiles from this repo into your home directory.
 Existing files are moved to ~/.dotfiles-backups/<timestamp>/ before linking.
 Tmux plugins are installed automatically when git and tmux are available.
 Figlet is installed automatically when a supported package manager is available.
+Neovim 0.12+ is installed automatically when possible.
 EOF
 }
 
@@ -78,6 +79,37 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+version_at_least() {
+  local current="$1"
+  local required="$2"
+  local current_major current_minor current_patch required_major required_minor required_patch
+
+  current="${current#v}"
+  required="${required#v}"
+  current="${current%%[-+~]*}"
+  required="${required%%[-+~]*}"
+
+  IFS=. read -r current_major current_minor current_patch <<<"${current}"
+  IFS=. read -r required_major required_minor required_patch <<<"${required}"
+
+  current_major="${current_major:-0}"
+  current_minor="${current_minor:-0}"
+  current_patch="${current_patch:-0}"
+  required_major="${required_major:-0}"
+  required_minor="${required_minor:-0}"
+  required_patch="${required_patch:-0}"
+
+  if (( current_major != required_major )); then
+    (( current_major > required_major ))
+    return
+  fi
+  if (( current_minor != required_minor )); then
+    (( current_minor > required_minor ))
+    return
+  fi
+  (( current_patch >= required_patch ))
+}
+
 run_root() {
   if [[ "${EUID}" -eq 0 ]]; then
     run "$@"
@@ -86,6 +118,229 @@ run_root() {
   else
     return 1
   fi
+}
+
+download_file() {
+  local url="$1"
+  local output_path="$2"
+
+  if command_exists curl; then
+    run curl -fL "${url}" -o "${output_path}"
+    return
+  fi
+
+  if command_exists wget; then
+    run wget -O "${output_path}" "${url}"
+    return
+  fi
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    run curl -fL "${url}" -o "${output_path}"
+    return
+  fi
+
+  return 1
+}
+
+fetch_url() {
+  local url="$1"
+
+  if command_exists curl; then
+    curl -fsSL "${url}"
+    return
+  fi
+
+  if command_exists wget; then
+    wget -qO- "${url}"
+    return
+  fi
+
+  return 1
+}
+
+installed_neovim_version() {
+  if ! command_exists nvim; then
+    return 1
+  fi
+
+  nvim --version | sed -n '1s/^NVIM v\([0-9][0-9.]*\).*/\1/p'
+}
+
+apt_neovim_candidate_version() {
+  if ! command_exists apt-cache; then
+    return 1
+  fi
+
+  apt-cache policy neovim 2>/dev/null | sed -n 's/^[[:space:]]*Candidate:[[:space:]]*\([^[:space:]]*\).*/\1/p'
+}
+
+install_neovim_with_package_manager() {
+  local min_version="$1"
+  local candidate_version
+
+  if command_exists apt-get; then
+    candidate_version="$(apt_neovim_candidate_version || true)"
+    if [[ -n "${candidate_version}" && "${candidate_version}" != "(none)" ]] && version_at_least "${candidate_version}" "${min_version}"; then
+      if run_root apt-get install -y neovim; then
+        printf 'installed: neovim\n'
+      else
+        printf 'neovim install skipped: root or sudo is required\n' >&2
+      fi
+      return 0
+    fi
+    printf 'neovim apt candidate too old: %s\n' "${candidate_version:-none}" >&2
+    return 1
+  fi
+
+  if command_exists pacman; then
+    if run_root pacman -S --needed --noconfirm neovim; then
+      printf 'installed: neovim\n'
+      return 0
+    fi
+    printf 'neovim install skipped: root or sudo is required\n' >&2
+    return 1
+  fi
+
+  if command_exists brew; then
+    if brew list neovim >/dev/null 2>&1; then
+      if run brew upgrade neovim; then
+        printf 'updated: neovim\n'
+        return 0
+      fi
+    elif run brew install neovim; then
+      printf 'installed: neovim\n'
+      return 0
+    fi
+    printf 'neovim install skipped: brew install failed\n' >&2
+    return 1
+  fi
+
+  return 1
+}
+
+neovim_tarball_asset() {
+  case "$(uname -m)" in
+    x86_64|amd64)
+      printf 'nvim-linux-x86_64'
+      ;;
+    aarch64|arm64)
+      printf 'nvim-linux-arm64'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+latest_neovim_tarball_url() {
+  local asset_base="$1"
+  local metadata_url="https://api.github.com/repos/neovim/neovim/releases/latest"
+  local metadata
+
+  metadata="$(fetch_url "${metadata_url}")"
+  printf '%s\n' "${metadata}" |
+    sed -n "s/.*\"browser_download_url\": \"\(.*${asset_base}\.tar\.gz\)\".*/\1/p" |
+    head -n 1
+}
+
+install_neovim_tarball() {
+  local min_version="$1"
+  local asset_base tarball_url tmp_dir archive_path extracted_path opt_path bin_path
+
+  if ! asset_base="$(neovim_tarball_asset)"; then
+    printf 'neovim tarball install skipped: unsupported architecture %s\n' "$(uname -m)" >&2
+    return 0
+  fi
+
+  opt_path="/opt/${asset_base}"
+  bin_path="/usr/local/bin/nvim"
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    tarball_url="https://github.com/neovim/neovim/releases/latest/download/${asset_base}.tar.gz"
+    archive_path="/tmp/${asset_base}.tar.gz"
+    extracted_path="/tmp/${asset_base}"
+    download_file "${tarball_url}" "${archive_path}"
+    run tar -xzf "${archive_path}" -C /tmp
+    run_root mkdir -p /opt /usr/local/bin
+    run_root rm -rf "${opt_path}"
+    run_root mv "${extracted_path}" "${opt_path}"
+    run_root ln -sfn "${opt_path}/bin/nvim" "${bin_path}"
+    printf 'would install neovim %s+ tarball: %s\n' "${min_version}" "${opt_path}"
+    return 0
+  fi
+
+  if ! command_exists tar; then
+    printf 'neovim tarball install skipped: tar is required\n' >&2
+    return 0
+  fi
+
+  if ! command_exists curl && ! command_exists wget; then
+    printf 'neovim tarball install skipped: curl or wget is required\n' >&2
+    return 0
+  fi
+
+  if ! tarball_url="$(latest_neovim_tarball_url "${asset_base}")" || [[ -z "${tarball_url}" ]]; then
+    printf 'neovim tarball install skipped: could not find latest %s tarball\n' "${asset_base}" >&2
+    return 0
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  archive_path="${tmp_dir}/${asset_base}.tar.gz"
+  extracted_path="${tmp_dir}/${asset_base}"
+
+  if ! download_file "${tarball_url}" "${archive_path}"; then
+    printf 'neovim tarball install skipped: download failed\n' >&2
+    rm -rf "${tmp_dir}"
+    return 0
+  fi
+
+  if ! tar -xzf "${archive_path}" -C "${tmp_dir}" || [[ ! -x "${extracted_path}/bin/nvim" ]]; then
+    printf 'neovim tarball install skipped: archive did not contain %s/bin/nvim\n' "${asset_base}" >&2
+    rm -rf "${tmp_dir}"
+    return 0
+  fi
+
+  if ! run_root mkdir -p /opt /usr/local/bin ||
+     ! run_root rm -rf "${opt_path}" ||
+     ! run_root mv "${extracted_path}" "${opt_path}" ||
+     ! run_root ln -sfn "${opt_path}/bin/nvim" "${bin_path}"; then
+    printf 'neovim tarball install skipped: root or sudo is required\n' >&2
+    rm -rf "${tmp_dir}"
+    return 0
+  fi
+
+  rm -rf "${tmp_dir}"
+  printf 'installed neovim tarball: %s\n' "${opt_path}"
+
+  if [[ "$(command -v nvim 2>/dev/null || true)" != "${bin_path}" ]]; then
+    printf 'neovim warning: PATH resolves nvim to %s, not %s\n' "$(command -v nvim 2>/dev/null || printf 'nothing')" "${bin_path}" >&2
+  fi
+}
+
+install_neovim() {
+  local min_version="0.12.0"
+  local current_version
+
+  current_version="$(installed_neovim_version || true)"
+  if [[ -n "${current_version}" ]] && version_at_least "${current_version}" "${min_version}"; then
+    printf 'already installed: neovim %s\n' "${current_version}"
+    return 0
+  fi
+
+  if [[ -n "${current_version}" ]]; then
+    printf 'neovim version too old: %s < %s\n' "${current_version}" "${min_version}" >&2
+  else
+    printf 'neovim not found\n' >&2
+  fi
+
+  if install_neovim_with_package_manager "${min_version}"; then
+    current_version="$(installed_neovim_version || true)"
+    if [[ -n "${current_version}" ]] && version_at_least "${current_version}" "${min_version}"; then
+      return 0
+    fi
+  fi
+
+  install_neovim_tarball "${min_version}"
 }
 
 install_figlet() {
@@ -268,6 +523,7 @@ link_path "${HOME_DIR}/.config/tmux/tmux.conf" "${HOME_DIR}/.tmux.conf"
 ensure_file "${HOME_DIR}/.XCompose.local"
 
 install_figlet
+install_neovim
 install_tmux_plugins
 
 if [[ -d "${BACKUP_DIR}" ]]; then

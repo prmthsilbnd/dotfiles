@@ -74,10 +74,12 @@ Optional integrations:
 - `zsh` for the main shell config.
 - `fastfetch` for startup system info.
 - `figlet` for the fastfetch hostname banner.
+- `nvim` 0.12+ for the Neovim config and native package management.
 - `tmux` and `git` for TPM plugin installation.
 - `python3` and `python3-venv` for the tmux CPU/MEM plugin dependency setup.
 
 `install.sh` attempts to install `figlet` through `apt-get`, `pacman`, or `brew` when available.
+It also ensures Neovim 0.12+ is available. If the system package manager cannot provide a new enough Neovim, Linux x86_64 and arm64 hosts use the official Neovim tarball under `/opt/nvim-linux-<arch>` with `/usr/local/bin/nvim` pointing to it. Existing distro packages such as `/usr/bin/nvim` are left installed.
 
 ## Maintenance Checks
 
