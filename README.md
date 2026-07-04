@@ -18,6 +18,18 @@ Apply it:
 ./install.sh
 ```
 
+Skip Neovim developer tool installation:
+
+```bash
+./install.sh --skip-nvim-tools
+```
+
+Run only the Neovim developer tool bootstrap:
+
+```bash
+./install.sh --only-nvim-tools
+```
+
 Existing files are moved to:
 
 ```text
@@ -80,6 +92,16 @@ Optional integrations:
 
 `install.sh` attempts to install `figlet` through `apt-get`, `pacman`, or `brew` when available.
 It also ensures Neovim 0.12+ is available. If the system package manager cannot provide a new enough Neovim, Linux x86_64 and arm64 hosts use the official Neovim tarball under `/opt/nvim-linux-<arch>` with `/usr/local/bin/nvim` pointing to it. Existing distro packages such as `/usr/bin/nvim` are left installed.
+
+It also attempts a best-effort Neovim developer tool bootstrap unless `--skip-nvim-tools` is passed:
+
+- System packages through `apt-get`, `pacman`, `dnf`, `brew`, or `winget` where available.
+- Node-based LSPs through `npm`: Pyright, TypeScript, and VS Code HTML/CSS/JSON language servers.
+- LaTeX editing tools: `texlab`, `latexmk`, LuaLaTeX, and common TeX Live package collections.
+- Treesitter CLI through the system package manager or npm.
+- Configured Treesitter parsers through headless Neovim when `nvim` and this config are available.
+- `tinymist` from the official prebuilt GitHub release installer.
+- `lua-language-server` from OS packages where available, with a Linux/macOS prebuilt GitHub release fallback.
 
 ## Maintenance Checks
 

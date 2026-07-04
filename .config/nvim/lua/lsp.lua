@@ -63,10 +63,8 @@ local servers = {
     filetypes = {
       "javascript",
       "javascriptreact",
-      "javascript.jsx",
       "typescript",
       "typescriptreact",
-      "typescript.tsx",
     },
     root_markers = { "package.json", "tsconfig.json", "jsconfig.json", ".git" },
     init_options = {
@@ -83,6 +81,20 @@ local servers = {
   },
   jsonls = {
     root_markers = { "package.json", "tsconfig.json", "jsconfig.json", ".git" },
+  },
+  texlab = {
+    cmd = { "texlab" },
+    filetypes = { "tex", "plaintex", "bib" },
+    root_markers = { ".latexmkrc", "latexmkrc", "Tectonic.toml", ".git" },
+    settings = {
+      texlab = {
+        build = {
+          executable = "latexmk",
+          args = { "-lualatex", "-interaction=nonstopmode", "-synctex=1", "%f" },
+          onSave = false,
+        },
+      },
+    },
   },
   lua_ls = {
     settings = {
@@ -101,8 +113,9 @@ local servers = {
 
 -- Batch enable the servers using native Neovim 0.12 approach
 for server, config in pairs(servers) do
-  vim.lsp.enable(server, config)
+  vim.lsp.config(server, config)
 end
+vim.lsp.enable(vim.tbl_keys(servers))
 
 -- Typst-specific keybindings (only active for .typ files)
 vim.api.nvim_create_autocmd('FileType', {

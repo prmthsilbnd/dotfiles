@@ -1,21 +1,5 @@
 {
   "plugins": {
-    "mason-lspconfig.nvim": {
-      "rev": "4823a251e7578a835bb979c37df390fca692ba39",
-      "src": "https://github.com/mason-org/mason-lspconfig.nvim"
-    },
-    "mason-tool-installer.nvim": {
-      "rev": "443f1ef8b5e6bf47045cb2217b6f748a223cf7dc",
-      "src": "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim"
-    },
-    "mason.nvim": {
-      "rev": "44d1e90e1f66e077268191e3ee9d2ac97cc18e65",
-      "src": "https://github.com/mason-org/mason.nvim"
-    },
-    "mini.pick": {
-      "rev": "7c0a674f620ddc701903b887b2dade836b23ea79",
-      "src": "https://github.com/echasnovski/mini.pick"
-    },
     "neo-tree.nvim": {
       "rev": "f3df514fff2bdd4318127c40470984137f87b62e",
       "src": "https://github.com/nvim-neo-tree/neo-tree.nvim",
@@ -36,10 +20,6 @@
     "nvim-lspconfig": {
       "rev": "92ee7d42320edfbb81f3cad851314ab197fa324a",
       "src": "https://github.com/neovim/nvim-lspconfig"
-    },
-    "nvim-tree.lua": {
-      "rev": "b93dbb9b58a882116b381dcc6ae33acafadfb8ee",
-      "src": "https://github.com/nvim-tree/nvim-tree.lua"
     },
     "nvim-treesitter": {
       "rev": "ec034813775d7e2974c7551c8c34499a828963f8",
@@ -72,10 +52,6 @@
     "typst-preview.nvim": {
       "rev": "bf5d5eaf23bbfcca9f98a24ed29bd084abf89bf2",
       "src": "https://github.com/chomosuke/typst-preview.nvim"
-    },
-    "vague.nvim": {
-      "rev": "fcc283576764474ccfbbcca240797d5d7f4d8a78",
-      "src": "https://github.com/vague2k/vague.nvim"
     },
     "vim-tmux": {
       "rev": "cfe76281efc29890548cf9eedd42ad51c7a1faf0",

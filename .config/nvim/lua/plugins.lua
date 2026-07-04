@@ -120,26 +120,70 @@ require("telescope").setup({
 ----------------------------------------------------------------
 -- Treesitter (syntax highlighting)
 ----------------------------------------------------------------
-local ok, treesitter = pcall(require, "nvim-treesitter.configs")
+local ok, treesitter = pcall(require, "nvim-treesitter")
 if ok then
-  treesitter.setup({
-    ensure_installed = {
-      "bash",
-      "c",
-      "cpp",
-      "css",
-      "html",
-      "javascript",
-      "json",
-      "latex",
-      "lua",
-      "python",
-      "tsx",
-      "typst",
-      "typescript",
-    },
-    highlight = { enable = true },
-    indent = { enable = true },
+  local parser_install_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "site")
+  local treesitter_languages = {
+    "bash",
+    "c",
+    "cpp",
+    "css",
+    "html",
+    "javascript",
+    "json",
+    "latex",
+    "lua",
+    "python",
+    "tsx",
+    "typst",
+    "typescript",
+  }
+  local treesitter_filetypes = {
+    "bash",
+    "c",
+    "cpp",
+    "css",
+    "html",
+    "javascript",
+    "javascriptreact",
+    "json",
+    "lua",
+    "python",
+    "sh",
+    "tex",
+    "typst",
+    "typescript",
+    "typescriptreact",
+  }
+
+  treesitter.setup({ install_dir = parser_install_dir })
+
+  vim.treesitter.language.register("bash", "sh")
+  vim.treesitter.language.register("javascript", "javascriptreact")
+  vim.treesitter.language.register("latex", "tex")
+  vim.treesitter.language.register("tsx", "typescriptreact")
+
+  vim.api.nvim_create_user_command("TSInstallConfigured", function(opts)
+    local task = treesitter.install(treesitter_languages, { summary = true })
+    if opts.bang then
+      task:wait(300000)
+    end
+  end, { bang = true, desc = "Install configured Treesitter parsers" })
+
+  vim.api.nvim_create_user_command("TSUpdateConfigured", function(opts)
+    local task = treesitter.update(treesitter_languages, { summary = true })
+    if opts.bang then
+      task:wait(300000)
+    end
+  end, { bang = true, desc = "Update configured Treesitter parsers" })
+
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = treesitter_filetypes,
+    callback = function()
+      if pcall(vim.treesitter.start) then
+        vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end
+    end,
   })
 end
 
