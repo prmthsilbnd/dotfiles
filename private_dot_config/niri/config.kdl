@@ -55,6 +55,12 @@ layout {
         proportion 0.66667
     }
 
+    preset-window-heights {
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+
     default-column-width { proportion 0.5; }
 
     border {
@@ -74,9 +80,9 @@ layer-rule {
 }
 
 overview {
-    workspace-shadow {
-        off
-    }
+    // workspace-shadow {
+    //     off
+    // }
 }
 
 // -----------------------------------------------------------------------------
@@ -182,14 +188,15 @@ window-rule {
 window-rule {
     match app-id=r#"org.quickshell$"#
     open-floating true
-    shadow {
-        off
-    }
+    // shadow {
+    //     off
+    // }
 }
 
 window-rule {
     match is-focused=false
     background-effect {
+        xray false
         blur true
     }
     opacity 0.75

@@ -1,63 +1,79 @@
 # Dotfiles
 
-Personal dotfiles managed from a single repo under `~/dotfiles`.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) from the
+source repo at `~/dotfiles`.
 
-The installer symlinks tracked files into `$HOME`, backs up existing targets, and installs a few optional runtime dependencies when the local machine supports them.
+This repo manages home-directory configuration only. System packages, services,
+and `/etc` changes are documented but are not applied automatically.
 
 ## Quick Start
 
-Preview the install:
+Install chezmoi with your system package manager. On Arch-based systems:
 
 ```bash
-./install.sh --dry-run
+sudo pacman -S --needed chezmoi
 ```
 
-Apply it:
+Point chezmoi at this existing local source repo:
 
 ```bash
-./install.sh
+mkdir -p ~/.config/chezmoi
+printf 'sourceDir = "%s/dotfiles"\n' "$HOME" > ~/.config/chezmoi/chezmoi.toml
 ```
 
-Skip Neovim developer tool installation:
+Preview changes:
 
 ```bash
-./install.sh --skip-nvim-tools
+chezmoi diff
 ```
 
-Run only the Neovim developer tool bootstrap:
+Apply changes:
 
 ```bash
-./install.sh --only-nvim-tools
+chezmoi apply
 ```
 
-Existing files are moved to:
+Update later:
 
-```text
-~/.dotfiles-backups/<timestamp>/
+```bash
+chezmoi update
+```
+
+When working directly inside this repo, these forms avoid relying on global
+chezmoi state:
+
+```bash
+chezmoi --source "$PWD" diff
+chezmoi --source "$PWD" apply
 ```
 
 ## Managed Paths
 
-`install.sh` links these paths into `$HOME`:
+Chezmoi source paths in this repo map to these home paths:
 
-- `.zshrc`
-- `.XCompose`
-- `.local/bin/dotfiles-fastfetch`
-- `.config/alacritty`
-- `.config/fastfetch`
-- `.config/fontconfig`
-- `.config/niri`
-- `.config/nvim`
-- `.config/tmux/tmux.conf`
-- `.config/tmux/scripts`
+- `dot_zshrc` -> `~/.zshrc`
+- `dot_XCompose` -> `~/.XCompose`
+- `private_dot_local/bin/executable_dotfiles-fastfetch` -> `~/.local/bin/dotfiles-fastfetch`
+- `private_dot_config/alacritty` -> `~/.config/alacritty`
+- `private_dot_config/fastfetch` -> `~/.config/fastfetch`
+- `private_dot_config/fontconfig` -> `~/.config/fontconfig`
+- `private_dot_config/niri` -> `~/.config/niri`
+- `private_dot_config/nvim` -> `~/.config/nvim`
+- `private_dot_config/tmux` -> `~/.config/tmux`
 
-It also links `~/.tmux.conf` to `~/.config/tmux/tmux.conf` for compatibility with older tmux setups.
+The `private_` prefix preserves `0700` permissions on `~/.config` and
+`~/.local`.
+
+Repo-only files such as this README, `docs/`, and `.gitignore` are excluded
+from the target home directory by `.chezmoiignore`.
 
 ## Components
 
 - Zsh: prompt, aliases, editor defaults, plugin loading, and fastfetch startup.
-- Fastfetch: wrapper that composes the OS logo with a slanted hostname banner. See [docs/fastfetch.md](docs/fastfetch.md).
-- Tmux: top status line, CPU/MEM scripts, TPM plugin setup, prefix-based pane movement. See [docs/tmux.md](docs/tmux.md).
+- Fastfetch: wrapper that composes the OS logo with a slanted hostname banner.
+  See [docs/fastfetch.md](docs/fastfetch.md).
+- Tmux: top status line, CPU/MEM scripts, TPM plugin setup, prefix-based pane
+  movement. See [docs/tmux.md](docs/tmux.md).
 - Neovim: Lua config, plugins, language helpers, and pack lockfile.
 - Alacritty: terminal settings and local theme.
 - Niri: compositor config and Dank Material Shell modules/profiles.
@@ -72,36 +88,50 @@ Keep machine-specific and private data out of git:
 - `~/.zprofile` or `~/.zprofile.local` for machine-specific login environment.
 - `~/.XCompose.local` for private compose entries.
 
-The installer creates `~/.XCompose.local` when it is missing. `~/.zprofile` is intentionally not managed.
+These files are intentionally unmanaged by chezmoi in this repo and should
+remain local-only.
+
+## User Setup Scripts
+
+`run_onchange_after_10-tmux-setup.sh` runs after `chezmoi apply` when the script
+changes and handles user-level tmux setup:
+
+- Install or update TPM under `~/.tmux/plugins/tpm`.
+- Run the TPM plugin installer.
+- Create or refresh the tmux CPU/MEM plugin Python virtual environment when the
+  plugin is present.
+
+Set `DOTFILES_SKIP_TMUX_SETUP=1` to skip this script for a single apply.
+
+Package installation and service setup are not automated. HomePod/Bonjour audio
+setup notes live in [docs/homepod.md](docs/homepod.md).
 
 ## Dependencies
 
-Required basics:
+Required for dotfile application:
 
-- `bash`
-- `ln`, `mv`, `mkdir`, `readlink`
+- `chezmoi`
 
 Optional integrations:
 
 - `zsh` for the main shell config.
 - `fastfetch` for startup system info.
-- `figlet` for the fastfetch hostname banner.
+- `figlet` for the fastfetch hostname banner. The wrapper falls back to plain
+  text when `figlet` is missing.
 - `nvim` 0.12+ for the Neovim config and native package management.
 - `tmux` and `git` for TPM plugin installation.
-- `python3` and `python3-venv` for the tmux CPU/MEM plugin dependency setup.
+- `python3` and Python venv support for the tmux CPU/MEM plugin dependency
+  setup.
 
-`install.sh` attempts to install `figlet` through `apt-get`, `pacman`, or `brew` when available.
-It also ensures Neovim 0.12+ is available. If the system package manager cannot provide a new enough Neovim, Linux x86_64 and arm64 hosts use the official Neovim tarball under `/opt/nvim-linux-<arch>` with `/usr/local/bin/nvim` pointing to it. Existing distro packages such as `/usr/bin/nvim` are left installed.
+Optional Neovim developer tools are installed outside chezmoi:
 
-It also attempts a best-effort Neovim developer tool bootstrap unless `--skip-nvim-tools` is passed:
-
-- System packages through `apt-get`, `pacman`, `dnf`, `brew`, or `winget` where available.
-- Node-based LSPs through `npm`: Pyright, TypeScript, and VS Code HTML/CSS/JSON language servers.
-- LaTeX editing tools: `texlab`, `latexmk`, LuaLaTeX, and common TeX Live package collections.
-- Treesitter CLI through the system package manager or npm.
-- Configured Treesitter parsers through headless Neovim when `nvim` and this config are available.
-- `tinymist` from the official prebuilt GitHub release installer.
-- `lua-language-server` from OS packages where available, with a Linux/macOS prebuilt GitHub release fallback.
+- Node-based LSPs through `npm`: Pyright, TypeScript, and VS Code HTML/CSS/JSON
+  language servers.
+- LaTeX editing tools: `texlab`, `latexmk`, LuaLaTeX, and common TeX Live
+  package collections.
+- Treesitter CLI and the configured Treesitter parsers.
+- `tinymist` for Typst.
+- `lua-language-server`.
 
 ## Maintenance Checks
 
@@ -109,14 +139,15 @@ Run these before committing broad config changes:
 
 ```bash
 git diff --check
-bash -n install.sh
-zsh -n .zshrc
-zsh -n .local/bin/dotfiles-fastfetch
-bash -n .config/tmux/scripts/status-metric
-bash -n .config/tmux/scripts/status-battery
-bash -n .config/tmux/scripts/status-identity
-tmux source-file -n .config/tmux/tmux.conf
-./install.sh --dry-run
+bash -n run_onchange_after_10-tmux-setup.sh
+zsh -n dot_zshrc
+zsh -n private_dot_local/bin/executable_dotfiles-fastfetch
+bash -n private_dot_config/tmux/scripts/executable_status-metric
+bash -n private_dot_config/tmux/scripts/executable_status-battery
+bash -n private_dot_config/tmux/scripts/executable_status-identity
+tmux source-file -n private_dot_config/tmux/tmux.conf
+chezmoi --source "$PWD" diff
+chezmoi --source "$PWD" apply --dry-run
 ```
 
 Fastfetch cache check:
@@ -127,8 +158,13 @@ Fastfetch cache check:
 
 ## Adding Another Dotfile
 
-1. Add the file or directory to this repo using the same path it should have under `$HOME`.
-2. Add the path to `managed_paths` in `install.sh`.
-3. Update `.gitignore` so the path is explicitly unignored.
-4. Document the new component in this README if it affects setup or maintenance.
-5. Run `./install.sh --dry-run`.
+1. Add the file or directory using chezmoi source naming.
+2. Update `.gitignore` so the new source path is explicitly unignored.
+3. Run `chezmoi --source "$PWD" diff`.
+4. Document the component here if it affects setup or maintenance.
+
+Common source names:
+
+- `~/.example` -> `dot_example`
+- `~/.config/example/config.toml` -> `private_dot_config/example/config.toml`
+- `~/.local/bin/example` -> `private_dot_local/bin/example`

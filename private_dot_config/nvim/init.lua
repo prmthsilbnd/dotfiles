@@ -89,6 +89,8 @@ map("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line down" })
 map("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line up" })
 
 -- Center cursor when jumping
+map("n", "<C-e>", "<C-e>j", { desc = "Scroll down and move cursor" })
+map("n", "<C-y>", "<C-y>k", { desc = "Scroll up and move cursor" })
 map("n", "<C-d>", "<C-d>zz")
 map("n", "<C-u>", "<C-u>zz")
 map("n", "n", "nzzzv")

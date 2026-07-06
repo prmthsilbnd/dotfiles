@@ -1,0 +1,5 @@
+# Repo-only files. These are kept in the chezmoi source repo but are not
+# materialized under $HOME.
+.gitignore
+README.md
+docs/**
