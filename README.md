@@ -28,13 +28,20 @@ reviewing the diff:
 ```
 
 `bootstrap.sh` installs the upstream chezmoi binary into `~/.local/bin` if
-chezmoi is missing, writes `~/.config/chezmoi/chezmoi.toml`, and runs
+chezmoi is missing, installs upstream Neovim into `~/.local/opt` if `nvim` is
+missing or older than 0.12, writes `~/.config/chezmoi/chezmoi.toml`, and runs
 `chezmoi diff`.
 
 To skip tmux plugin setup during apply:
 
 ```bash
 ./bootstrap.sh --force --skip-tmux-setup
+```
+
+To skip the Neovim version check/install:
+
+```bash
+./bootstrap.sh --skip-nvim
 ```
 
 Update later:
@@ -122,7 +129,9 @@ Optional integrations:
 - `fastfetch` for startup system info.
 - `figlet` for the fastfetch hostname banner. The wrapper falls back to plain
   text when `figlet` is missing.
-- `nvim` 0.12+ for the Neovim config and native package management.
+- `nvim` 0.12+ for the Neovim config and native package management. On Linux
+  x86_64 and arm64, `bootstrap.sh` installs the upstream tarball under
+  `~/.local/opt` when the available `nvim` is too old.
 - `tmux` and `git` for TPM plugin installation.
 - `python3` and Python venv support for the tmux CPU/MEM plugin dependency
   setup.
