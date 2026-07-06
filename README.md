@@ -8,29 +8,33 @@ and `/etc` changes are documented but are not applied automatically.
 
 ## Quick Start
 
-Install chezmoi with your system package manager. On Arch-based systems:
+On a machine with this repo already cloned, run:
 
 ```bash
-sudo pacman -S --needed chezmoi
+./bootstrap.sh
 ```
 
-Point chezmoi at this existing local source repo:
+Review the diff, then apply:
 
 ```bash
-mkdir -p ~/.config/chezmoi
-printf 'sourceDir = "%s/dotfiles"\n' "$HOME" > ~/.config/chezmoi/chezmoi.toml
+./bootstrap.sh --apply
 ```
 
-Preview changes:
+On machines that still have the old symlink-based install, use `--force` after
+reviewing the diff:
 
 ```bash
-chezmoi diff
+./bootstrap.sh --force
 ```
 
-Apply changes:
+`bootstrap.sh` installs the upstream chezmoi binary into `~/.local/bin` if
+chezmoi is missing, writes `~/.config/chezmoi/chezmoi.toml`, and runs
+`chezmoi diff`.
+
+To skip tmux plugin setup during apply:
 
 ```bash
-chezmoi apply
+./bootstrap.sh --force --skip-tmux-setup
 ```
 
 Update later:
@@ -64,8 +68,8 @@ Chezmoi source paths in this repo map to these home paths:
 The `private_` prefix preserves `0700` permissions on `~/.config` and
 `~/.local`.
 
-Repo-only files such as this README, `docs/`, and `.gitignore` are excluded
-from the target home directory by `.chezmoiignore`.
+Repo-only files such as this README, `bootstrap.sh`, `docs/`, and `.gitignore`
+are excluded from the target home directory by `.chezmoiignore`.
 
 ## Components
 
@@ -139,6 +143,7 @@ Run these before committing broad config changes:
 
 ```bash
 git diff --check
+sh -n bootstrap.sh
 bash -n run_onchange_after_10-tmux-setup.sh
 zsh -n dot_zshrc
 zsh -n private_dot_local/bin/executable_dotfiles-fastfetch

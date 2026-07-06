@@ -13,6 +13,7 @@ dot_zprofile.local
 !dot_XCompose
 !dot_zshrc
 !README.md
+!bootstrap.sh
 !run_onchange_after_10-tmux-setup.sh
 
 !docs/

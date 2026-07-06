@@ -2,4 +2,5 @@
 # materialized under $HOME.
 .gitignore
 README.md
+bootstrap.sh
 docs/**
