@@ -32,6 +32,15 @@ chezmoi is missing, installs upstream Neovim into `~/.local/opt` if `nvim` is
 missing or older than 0.12, writes `~/.config/chezmoi/chezmoi.toml`, and runs
 `chezmoi diff`.
 
+If bootstrap installs Neovim but the current shell still opens an older system
+`nvim`, start a new shell or run:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+rehash 2>/dev/null || true
+hash -r 2>/dev/null || true
+```
+
 To skip tmux plugin setup during apply:
 
 ```bash

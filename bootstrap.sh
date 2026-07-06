@@ -22,6 +22,7 @@ apply=0
 force=0
 skip_nvim=0
 skip_tmux_setup=0
+local_bin_note=0
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -236,6 +237,7 @@ ensure_neovim() {
   ln -s "$target_dir/bin/nvim" "$bin_dir/nvim"
   installed_version=$("$bin_dir/nvim" --version | sed -n '1s/^NVIM v\([0-9][0-9.]*\).*/\1/p')
   printf 'bootstrap: installed nvim %s\n' "${installed_version:-unknown}"
+  local_bin_note=1
 
   cleanup_neovim_temp
   trap - EXIT HUP INT TERM
@@ -269,5 +271,23 @@ Review the diff above, then apply with:
 
 For old symlink-based installs that prompt on replacements, use:
   ./bootstrap.sh --force
+EOF
+fi
+
+if [ "$local_bin_note" -eq 1 ]; then
+  cat <<EOF
+
+Installed user-local tools under:
+  $bin_dir
+
+This script cannot update the PATH of your already-running shell. Open a new
+shell, or run this now:
+  export PATH="$bin_dir:\$PATH"
+  hash -r 2>/dev/null || true
+  rehash 2>/dev/null || true
+
+Then verify:
+  command -v nvim
+  nvim --version
 EOF
 fi
