@@ -1,8 +1,7 @@
 include "%L"
 
 # Shared compose sequences belong here and are tracked in git.
-# Example:
-<Multi_key> <e> <m> <a> <i> <l> : "seonggyun.kim@outlook.com"
+# Put private compose sequences in ~/.XCompose.local.
 
 # Greek letters
 <Multi_key> <a> <l> <p> <h> <a> : "α"
