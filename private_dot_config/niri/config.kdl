@@ -27,7 +27,7 @@ gestures {
 input {
     keyboard {
         xkb {
-            options "compose:caps,shift:both_capslock"
+            options "compose:caps,shift:both_capslock,korean:ralt_hangul"
         }
         numlock
     }
@@ -96,6 +96,8 @@ environment {
     SDL_IM_MODULE "fcitx"
     GLFW_IM_MODULE "fcitx"
 }
+
+spawn-at-startup "fcitx5" "-d" "--replace"
 
 hotkey-overlay {
     skip-at-startup
