@@ -75,8 +75,10 @@ Chezmoi source paths in this repo map to these home paths:
 - `dot_XCompose` -> `~/.XCompose`
 - `private_dot_local/bin/executable_dotfiles-fastfetch` -> `~/.local/bin/dotfiles-fastfetch`
 - `private_dot_config/alacritty` -> `~/.config/alacritty`
+- `private_dot_config/kitty` -> `~/.config/kitty`
 - `private_dot_config/fastfetch` -> `~/.config/fastfetch`
 - `private_dot_config/fontconfig` -> `~/.config/fontconfig`
+- `private_dot_config/matugen` -> `~/.config/matugen`
 - `private_dot_config/niri` -> `~/.config/niri`
 - `private_dot_config/nvim` -> `~/.config/nvim`
 - `private_dot_config/tmux` -> `~/.config/tmux`
@@ -94,8 +96,10 @@ are excluded from the target home directory by `.chezmoiignore`.
   See [docs/fastfetch.md](docs/fastfetch.md).
 - Tmux: top status line, CPU/MEM scripts, TPM plugin setup, prefix-based pane
   movement. See [docs/tmux.md](docs/tmux.md).
-- Neovim: Lua config, plugins, language helpers, and pack lockfile.
-- Alacritty: terminal settings and local theme.
+- Neovim: Lua config, plugins, language helpers, `AvengeMedia/base46` theme engine, and DMS matugen integration with headless fallback.
+- Matugen: Neovim color & lualine templates for Dank Material Shell (DMS) dynamic accent tinting.
+- Kitty: main terminal emulator settings and local theme.
+- Alacritty: secondary terminal settings and local theme.
 - Niri: compositor config and Dank Material Shell modules/profiles.
 - Fontconfig: Korean font fallback.
 - XCompose: compose key entries, with local extension support.

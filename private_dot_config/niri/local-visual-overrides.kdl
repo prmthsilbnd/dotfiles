@@ -1,4 +1,12 @@
 // Local overrides loaded after DMS-generated includes.
+// Keep the Dell display adjacent to the laptop panel. Niri's directional
+// monitor actions require the output edges to overlap.
+output "DP-2" {
+    mode "1920x1080@60.000"
+    scale 1
+    position x=10880 y=1440
+}
+
 layout {
     border {
         off

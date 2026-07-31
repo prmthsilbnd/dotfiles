@@ -125,7 +125,7 @@ binds {
     XF86Launch1 { screenshot; }
     Mod+Shift+E { quit; }
     Mod+I hotkey-overlay-title="Open Zen Browser" { spawn "zen-browser"; }
-    Super+Return hotkey-overlay-title="Open Terminal" { spawn "alacritty"; }
+    Super+Return hotkey-overlay-title="Open Terminal" { spawn "kitty"; }
     Mod+Escape { toggle-keyboard-shortcuts-inhibit; }
     Mod+Shift+Slash { show-hotkey-overlay; }
     Mod+Tab repeat=false { toggle-overview; }

@@ -1,6 +1,7 @@
 vim.pack.add({
   -- Theme
   { src = "shaunsingh/nord.nvim" },
+  { src = "https://github.com/AvengeMedia/base46" },
 
   -- File navigation
   { src = "stevearc/oil.nvim" },
@@ -34,18 +35,35 @@ vim.pack.add({
 })
 
 ----------------------------------------------------------------
--- Theme configuration
+-- Theme configuration (AvengeMedia/base46 + DMS / fallback)
 ----------------------------------------------------------------
-vim.g.nord_contrast = false
-vim.g.nord_borders = true
-vim.g.nord_disable_background = true
-vim.g.nord_italic = false
-vim.g.nord_uniform_diff_background = true
-vim.g.nord_bold = false
-
--- Apply theme
-require('nord').set()
-vim.cmd.colorscheme("nord")
+local ok_base46, base46 = pcall(require, "base46")
+if ok_base46 then
+  base46.setup({
+    set_background = true,
+    term_colors = true,
+    transparency = false,
+    integrations = {
+      defaults = true,
+      lsp = true,
+      treesitter = true,
+      telescope = true,
+      nvimtree = true,
+      whichkey = true,
+    },
+  })
+  -- Try loading DMS generated theme first (if DMS/Matugen generated colors/dms.lua)
+  -- Fallback to builtin base46-nord or nord if dms is not present (e.g. headless servers)
+  local ok_dms = pcall(vim.cmd.colorscheme, "dms")
+  if not ok_dms then
+    local ok_base46_nord = pcall(vim.cmd.colorscheme, "base46-nord")
+    if not ok_base46_nord then
+      pcall(vim.cmd.colorscheme, "nord")
+    end
+  end
+else
+  pcall(vim.cmd.colorscheme, "nord")
+end
 
 -- Make floating windows transparent
 vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })

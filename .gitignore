@@ -26,6 +26,8 @@ dot_zprofile.local
 !private_dot_config/
 !private_dot_config/alacritty/
 !private_dot_config/alacritty/*.toml
+!private_dot_config/kitty/
+!private_dot_config/kitty/*.conf
 !private_dot_config/fastfetch/
 !private_dot_config/fastfetch/config.jsonc
 !private_dot_config/fontconfig/
@@ -38,6 +40,9 @@ dot_zprofile.local
 !private_dot_config/niri/dms/*.kdl
 !private_dot_config/niri/dms/profiles/
 !private_dot_config/niri/dms/profiles/*.kdl
+!private_dot_config/matugen/
+!private_dot_config/matugen/*.toml
+!private_dot_config/matugen/*.lua
 !private_dot_config/nvim/
 !private_dot_config/nvim/init.lua
 !private_dot_config/nvim/nvim-pack-lock.json
@@ -45,6 +50,8 @@ dot_zprofile.local
 !private_dot_config/nvim/lua/*.lua
 !private_dot_config/nvim/lua/plugins/
 !private_dot_config/nvim/lua/plugins/*.lua
+!private_dot_config/nvim/colors/
+!private_dot_config/nvim/colors/*.lua
 !private_dot_config/tmux/
 !private_dot_config/tmux/tmux.conf
 !private_dot_config/tmux/scripts/

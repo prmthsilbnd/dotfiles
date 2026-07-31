@@ -1,0 +1,9 @@
+[config]
+
+[templates.neovim-colors]
+input_path = '~/.config/matugen/neovim-colors.lua'
+output_path = '~/.config/nvim/colors/dms.lua'
+
+[templates.neovim-lualine]
+input_path = '~/.config/matugen/neovim-lualine.lua'
+output_path = '~/.config/nvim/lua/lualine/themes/dms.lua'
