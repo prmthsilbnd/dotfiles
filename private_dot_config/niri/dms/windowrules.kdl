@@ -13,3 +13,9 @@ window-rule {
     open-floating true
     min-height 800
 }
+
+// @id=wr_1785522517336801674 @name=spotify
+window-rule {
+    match app-id="^spotify$"
+    open-maximized-to-edges true
+}
