@@ -10,6 +10,7 @@ dot_zprofile.local
 
 !.gitignore
 !.chezmoiignore
+!.chezmoiignore.tmpl
 !dot_XCompose
 !dot_zshrc
 !README.md

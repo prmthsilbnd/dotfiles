@@ -1,0 +1,15 @@
+# Repo-only files. These are kept in the chezmoi source repo but are not
+# materialized under $HOME.
+.gitignore
+README.md
+bootstrap.sh
+docs/**
+
+# Desktop GUI configuration (Niri, Alacritty, Kitty, Matugen)
+# Materialized on "eagle" (desktop workstation); ignored on server hosts.
+{{ if ne .chezmoi.hostname "eagle" -}}
+.config/niri/**
+.config/alacritty/**
+.config/kitty/**
+.config/matugen/**
+{{ end -}}
