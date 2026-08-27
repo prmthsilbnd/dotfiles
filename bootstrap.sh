@@ -247,9 +247,17 @@ if [ "$skip_nvim" -eq 0 ]; then
   ensure_neovim
 fi
 
-printf 'sourceDir = "%s"\n' "$repo" > "$chezmoi_config"
+chezmoi_source_dir=$repo
+if command_exists cygpath; then
+  # chezmoi on Windows is a native binary; a POSIX-style path from an MSYS
+  # shell (e.g. /c/Users/name/dotfiles) resolves relative to chezmoi's own
+  # working directory instead of the drive root, so use the native form.
+  chezmoi_source_dir=$(cygpath -m "$repo")
+fi
+
+printf 'sourceDir = "%s"\n' "$chezmoi_source_dir" > "$chezmoi_config"
 printf 'bootstrap: wrote %s\n' "$chezmoi_config"
-printf 'bootstrap: chezmoi source: %s\n' "$repo"
+printf 'bootstrap: chezmoi source: %s\n' "$chezmoi_source_dir"
 
 chezmoi diff
 

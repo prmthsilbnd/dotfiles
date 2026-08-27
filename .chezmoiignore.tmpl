@@ -13,3 +13,10 @@ docs/**
 .config/kitty/**
 .config/matugen/**
 {{ end -}}
+
+# tmux -> psmux CLI compatibility shim. Only needed on Windows, where psmux
+# stands in for tmux; on real tmux hosts it would just be a harmless but
+# confusing passthrough wrapper.
+{{ if ne .chezmoi.os "windows" -}}
+.local/bin/tmux
+{{ end -}}

@@ -1,4 +1,8 @@
+{{- if eq .chezmoi.os "windows" }}
+set -g default-shell "C:/Program Files/Git/bin/bash.exe"
+{{- else }}
 set -g default-shell /bin/zsh
+{{- end }}
 
 # Enable 256-color and true-color (24-bit) support in tmux
 set -g default-terminal "screen-256color" # Set terminal type for 256-color support
@@ -20,12 +24,14 @@ set -g status-interval 3
 set -g allow-passthrough off
 
 # Style
-gray_light="#D8DEE9"
-gray_medium="#ABB2BF"
-gray_dark="#3B4252"
-cyan_soft="#88c0d0"
-blue_muted="#81A1C1"
-green_soft="#A3BE8C"
+# Colors are inlined rather than defined as tmux config variables (`name="value"`)
+# because psmux (the tmux-compatible multiplexer used on Windows) does not
+# support tmux's config-variable substitution -- `${name}` is left unexpanded.
+#   gray_light  #D8DEE9
+#   gray_dark   #3B4252
+#   cyan_soft   #88c0d0
+#   blue_muted  #81A1C1
+#   green_soft  #A3BE8C
 
 set -g base-index 0
 set -g status on
@@ -33,15 +39,15 @@ set -g status-position top
 set -g status-format[0] "#{E:status-left}#[align=left,list=on]#{W:#{E:window-status-format},#{E:window-status-current-format}}#[nolist,align=right]#{E:status-right}"
 set -g status-left-length 100
 set -g status-right-length 100
-set -g status-style "fg=${gray_light},bg=default"
-set -g status-left "#[fg=${green_soft},bold]#S #[fg=${gray_light},nobold,nounderscore]| "
-set -g status-right "#(~/.config/tmux/scripts/status-metric cpu 80 '${gray_light}') #(~/.config/tmux/scripts/status-metric mem 80 '${gray_light}')#[fg=${gray_light},nobold,nounderscore]#(~/.config/tmux/scripts/status-battery 20 '${gray_light}' '${green_soft}' red) #[fg=${gray_light},nobold,nounderscore]| #(~/.config/tmux/scripts/status-identity '${gray_light}' magenta colour220) "
-set -g window-status-current-format "#[fg=${cyan_soft},bold,underscore]#I:#W#[fg=${gray_light},nobold,nounderscore] "
-set -g window-status-format "#[fg=${gray_light},nobold,nounderscore]#I:#W "
-set -g message-style "fg=${gray_light},bg=default"
-set -g mode-style "fg=${gray_dark},bg=${blue_muted}"
-set -g pane-border-style "fg=${gray_dark}"
-set -g pane-active-border-style "fg=${green_soft}"
+set -g status-style "fg=#D8DEE9,bg=default"
+set -g status-left "#[fg=#A3BE8C,bold]#S #[fg=#D8DEE9,nobold,nounderscore]| "
+set -g status-right "#(bash ~/.config/tmux/scripts/status-metric cpu 80 '#D8DEE9') #(bash ~/.config/tmux/scripts/status-metric mem 80 '#D8DEE9')#[fg=#D8DEE9,nobold,nounderscore]#(bash ~/.config/tmux/scripts/status-battery 20 '#D8DEE9' '#A3BE8C' red) #[fg=#D8DEE9,nobold,nounderscore]| #(bash ~/.config/tmux/scripts/status-identity '#D8DEE9' magenta colour220) "
+set -g window-status-current-format "#[fg=#88c0d0,bold,underscore]#I:#W#[fg=#D8DEE9,nobold,nounderscore] "
+set -g window-status-format "#[fg=#D8DEE9,nobold,nounderscore]#I:#W "
+set -g message-style "fg=#D8DEE9,bg=default"
+set -g mode-style "fg=#3B4252,bg=#81A1C1"
+set -g pane-border-style "fg=#3B4252"
+set -g pane-active-border-style "fg=#A3BE8C"
 
 # Resurrect
 set -g @resurrect-capture-pane-contents 'on'
@@ -67,4 +73,6 @@ bind -T copy-mode-vi v send -X begin-selection
 bind -T copy-mode-vi y send -X copy-selection-and-cancel
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-run '~/.tmux/plugins/tpm/tpm'
+# Invoked via `bash` explicitly: psmux's run-shell does not execute scripts
+# through their shebang line the way real tmux (backed by a POSIX shell) does.
+run 'bash ~/.tmux/plugins/tpm/tpm'

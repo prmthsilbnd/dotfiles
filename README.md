@@ -73,7 +73,11 @@ Chezmoi source paths in this repo map to these home paths:
 
 - `dot_zshrc` -> `~/.zshrc`
 - `dot_XCompose` -> `~/.XCompose`
+- `dot_tmux.conf` -> `~/.tmux.conf` (sources `~/.config/tmux/tmux.conf`; psmux only looks for
+  `~/.tmux.conf`, not the XDG path, so this is what makes it discoverable on Windows)
 - `private_dot_local/bin/executable_dotfiles-fastfetch` -> `~/.local/bin/dotfiles-fastfetch`
+- `private_dot_local/bin/executable_tmux` -> `~/.local/bin/tmux` (Windows only; see
+  [docs/tmux.md](docs/tmux.md#psmux-windows))
 - `private_dot_config/alacritty` -> `~/.config/alacritty`
 - `private_dot_config/kitty` -> `~/.config/kitty`
 - `private_dot_config/fastfetch` -> `~/.config/fastfetch`
@@ -95,7 +99,8 @@ are excluded from the target home directory by `.chezmoiignore`.
 - Fastfetch: wrapper that composes the OS logo with a slanted hostname banner.
   See [docs/fastfetch.md](docs/fastfetch.md).
 - Tmux: top status line, CPU/MEM scripts, TPM plugin setup, prefix-based pane
-  movement. See [docs/tmux.md](docs/tmux.md).
+  movement. Also works under [psmux](https://github.com/psmux/psmux) on
+  Windows. See [docs/tmux.md](docs/tmux.md).
 - Neovim: Lua config, plugins, language helpers, `AvengeMedia/base46` theme engine, and DMS matugen integration with headless fallback.
 - Matugen: Neovim color & lualine templates for Dank Material Shell (DMS) dynamic accent tinting.
 - Kitty: main terminal emulator settings and local theme.
@@ -172,7 +177,8 @@ zsh -n private_dot_local/bin/executable_dotfiles-fastfetch
 bash -n private_dot_config/tmux/scripts/executable_status-metric
 bash -n private_dot_config/tmux/scripts/executable_status-battery
 bash -n private_dot_config/tmux/scripts/executable_status-identity
-tmux source-file -n private_dot_config/tmux/tmux.conf
+bash -n private_dot_local/bin/executable_tmux
+tmux source-file -n <(chezmoi --source "$PWD" execute-template < private_dot_config/tmux/tmux.conf.tmpl)
 chezmoi --source "$PWD" diff
 chezmoi --source "$PWD" apply --dry-run
 ```

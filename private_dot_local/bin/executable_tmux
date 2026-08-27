@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# tmux -> psmux compatibility shim (Windows/psmux only).
+#
+# psmux (github.com/psmux/psmux) implements a tmux-compatible CLI but is
+# missing two things real tmux -- and tmux plugins such as TPM -- rely on:
+#   1. `\;` command chaining, e.g. `tmux start-server \; show-environment ...`
+#   2. singular option-command aliases: `show-option`, `show-window-option`
+#      (psmux only implements the plural `show-options`/`show-window-options`)
+#
+# This wrapper splits chained commands into separate psmux invocations and
+# rewrites the singular aliases to their plural form, then forwards
+# everything else untouched to the real psmux `tmux.exe`.
+#
+# Install this ahead of psmux's own tmux shim in PATH (~/.local/bin comes
+# first) so plugin managers like TPM, which shell out to `tmux`, work.
+
+self_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+find_real_tmux() {
+  local dir candidate resolved
+  IFS=':' read -ra dirs <<<"$PATH"
+  for dir in "${dirs[@]}"; do
+    [ -n "$dir" ] || continue
+    for candidate in "$dir/tmux.exe" "$dir/tmux"; do
+      [ -f "$candidate" ] || continue
+      resolved="$(cd "$(dirname "$candidate")" 2>/dev/null && pwd)/$(basename "$candidate")"
+      [ "$resolved" = "$self_path" ] && continue
+      printf '%s\n' "$candidate"
+      return 0
+    done
+  done
+  return 1
+}
+
+REAL_TMUX="${TMUX_COMPAT_REAL_TMUX:-$(find_real_tmux)}"
+if [ -z "$REAL_TMUX" ]; then
+  echo "tmux shim: could not locate the real psmux tmux binary in PATH" >&2
+  exit 127
+fi
+
+normalize_token() {
+  case "$1" in
+    show-option) printf 'show-options\n' ;;
+    show-window-option) printf 'show-window-options\n' ;;
+    *) printf '%s\n' "$1" ;;
+  esac
+}
+
+# psmux's `show-environment` always emits an extra, non-tmux
+# `PSMUX_TARGET_SESSION=...` line, and returns exit 0 with no line at all
+# for a variable that was never set (real tmux errors in that case). Both
+# break scripts -- like TPM's tpm_path() -- that pipe the single-name form
+# through `cut -f2 -d=` or just check the exit status. Filter down to the
+# one requested line when a variable name was given.
+show_environment_target_name() {
+  local a prev=""
+  for a in "$@"; do
+    case "$a" in
+      -g|-s|-u|-t) prev="$a" ;;
+      -*) prev="" ;;
+      *)
+        if [ "$prev" = "-t" ]; then
+          prev=""
+        else
+          printf '%s\n' "$a"
+          return 0
+        fi
+        ;;
+    esac
+  done
+  return 1
+}
+
+run_one() {
+  local cmd=("$@") i is_show_environment=0 name="" out
+
+  for i in "${!cmd[@]}"; do
+    cmd[i]="$(normalize_token "${cmd[i]}")"
+    [ "$i" -eq 0 ] && [ "${cmd[0]}" = "show-environment" ] && is_show_environment=1
+  done
+
+  if [ "$is_show_environment" -eq 1 ] && name="$(show_environment_target_name "${cmd[@]:1}")"; then
+    out="$("$REAL_TMUX" "${cmd[@]}" 2>/dev/null | grep -m1 "^${name}=")"
+    [ -n "$out" ] || return 1
+    printf '%s\n' "$out"
+    return 0
+  fi
+
+  "$REAL_TMUX" "${cmd[@]}"
+}
+
+current=()
+status=0
+for arg in "$@"; do
+  if [ "$arg" = ";" ]; then
+    [ "${#current[@]}" -gt 0 ] && { run_one "${current[@]}"; status=$?; }
+    current=()
+  elif [[ "$arg" == *";" ]]; then
+    stripped="${arg%;}"
+    [ -n "$stripped" ] && current+=("$stripped")
+    [ "${#current[@]}" -gt 0 ] && { run_one "${current[@]}"; status=$?; }
+    current=()
+  else
+    current+=("$arg")
+  fi
+done
+[ "${#current[@]}" -gt 0 ] && { run_one "${current[@]}"; status=$?; }
+exit "$status"

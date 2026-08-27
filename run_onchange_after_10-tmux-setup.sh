@@ -74,6 +74,17 @@ install_tmux_plugins() {
   tmux start-server \; source-file "${HOME_DIR}/.config/tmux/tmux.conf" >/dev/null 2>&1 || warn 'tmux config source failed before plugin install'
   "${tpm_dir}/bin/install_plugins" >/dev/null 2>&1 || warn 'tmux plugin install skipped or failed'
   tmux source-file "${HOME_DIR}/.config/tmux/tmux.conf" >/dev/null 2>&1 || warn 'tmux config source failed after plugin install'
+
+  # tmux.conf's own `run '...tpm/tpm'` line is what sources installed plugins
+  # (applies their settings/keybindings) on real tmux, triggered as a side
+  # effect of the source-file calls above. psmux does not execute `run`/
+  # `run-shell` lines that appear inside a sourced config file -- only when
+  # invoked directly at the top level -- so that line is a silent no-op
+  # there. Run TPM's bootstrap directly as a fallback; this is a harmless,
+  # idempotent no-op on hosts where the config line already did it.
+  if [[ -x "${tpm_dir}/tpm" ]]; then
+    bash "${tpm_dir}/tpm" >/dev/null 2>&1 || warn 'tpm plugin sourcing failed'
+  fi
 }
 
 install_tmux_cpu_mem_deps() {
