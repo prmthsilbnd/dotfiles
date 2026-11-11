@@ -1,10 +1,11 @@
 {{- /* Colors are chezmoi template variables, not tmux `name="value"` config
-       variables: psmux (the Windows tmux) cannot parse the latter. */ -}}
-{{- $gray_light := "#D8DEE9" -}}
-{{- $gray_dark := "#3B4252" -}}
+       variables: psmux (the Windows tmux) cannot parse the latter. Keep the
+       hex lowercase: psmux expands `#D` (pane id) even inside `#[...]`. */ -}}
+{{- $gray_light := "#d8dee9" -}}
+{{- $gray_dark := "#3b4252" -}}
 {{- $cyan_soft := "#88c0d0" -}}
-{{- $blue_muted := "#81A1C1" -}}
-{{- $green_soft := "#A3BE8C" -}}
+{{- $blue_muted := "#81a1c1" -}}
+{{- $green_soft := "#a3be8c" -}}
 {{- $windows := eq .chezmoi.os "windows" -}}
 
 {{- if $windows }}
@@ -58,10 +59,9 @@ set -g status-right-length 100
 set -g status-style "fg={{ $gray_light }},bg=default"
 set -g status-left "#[fg={{ $green_soft }},bold]#S #[fg={{ $gray_light }},nobold,nounderscore]| "
 {{- if $windows }}
-# Written by scripts/status-windows.ps1, started at the bottom of this file.
-# psmux runs #() through PowerShell unless it starts with cmd; cmd is far
-# cheaper to spawn every status-interval. The path must use backslashes.
-set -g status-right '#(cmd /c type {{ .chezmoi.homeDir | replace "/" "\\" }}\.cache\psmux-status-right.txt)'
+# Identity only, filled in by chezmoi: no CPU/MEM/battery on Windows, where
+# every #() refresh spawns a process (tens of ms of CPU each).
+set -g status-right "#[fg={{ $gray_light }},nobold,nounderscore]{{ env "USERNAME" | upper }} | #[fg=magenta,bold,nounderscore]{{ .chezmoi.hostname | upper }} "
 {{- else }}
 set -g status-right "#(~/.config/tmux/scripts/status-metric cpu 80 '{{ $gray_light }}') #(~/.config/tmux/scripts/status-metric mem 80 '{{ $gray_light }}')#[fg={{ $gray_light }},nobold,nounderscore]#(~/.config/tmux/scripts/status-battery 20 '{{ $gray_light }}' '{{ $green_soft }}' red) #[fg={{ $gray_light }},nobold,nounderscore]| #(~/.config/tmux/scripts/status-identity '{{ $gray_light }}' magenta colour220) "
 {{- end }}
@@ -95,12 +95,7 @@ bind C-l resize-pane -R 1
 bind -T copy-mode-vi v send -X begin-selection
 bind -T copy-mode-vi y send -X copy-selection-and-cancel
 
-{{- if $windows }}
-
-# Keep this at the very bottom: psmux runs the config's options and bindings
-# before the first command, and default-shell must apply to the first pane.
-run -b '~/.config/tmux/scripts/status-windows.ps1'
-{{- else }}
+{{- if not $windows }}
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
 run '~/.tmux/plugins/tpm/tpm'

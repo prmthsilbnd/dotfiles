@@ -14,13 +14,9 @@ docs/**
 .config/matugen/**
 {{ end -}}
 
-# tmux status scripts: bash ones for real tmux, a PowerShell one for psmux on
-# Windows. TPM setup is skipped on Windows too; see docs/tmux.md.
+# tmux status scripts and TPM setup are for real tmux only; psmux on Windows
+# uses neither. See docs/tmux.md.
 {{ if eq .chezmoi.os "windows" -}}
-.config/tmux/scripts/status-metric
-.config/tmux/scripts/status-battery
-.config/tmux/scripts/status-identity
+.config/tmux/scripts
 10-tmux-setup.sh
-{{ else -}}
-.config/tmux/scripts/status-windows.ps1
 {{ end -}}
