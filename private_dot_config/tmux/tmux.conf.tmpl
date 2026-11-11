@@ -1,22 +1,47 @@
-{{- if eq .chezmoi.os "windows" }}
-set -g default-shell "C:/Program Files/Git/bin/bash.exe"
+{{- /* Colors are chezmoi template variables, not tmux `name="value"` config
+       variables: psmux (the Windows tmux) cannot parse the latter. */ -}}
+{{- $gray_light := "#D8DEE9" -}}
+{{- $gray_dark := "#3B4252" -}}
+{{- $cyan_soft := "#88c0d0" -}}
+{{- $blue_muted := "#81A1C1" -}}
+{{- $green_soft := "#A3BE8C" -}}
+{{- $windows := eq .chezmoi.os "windows" -}}
+
+{{- if $windows }}
+# psmux on Windows. default-terminal must stay xterm-256color there:
+# screen/tmux-256color terminfo breaks Neovim splits under ConPTY (psmux #806).
+set -g default-shell pwsh
+set -g default-terminal "xterm-256color"
 {{- else }}
 set -g default-shell /bin/zsh
+set -g default-terminal "screen-256color"
 {{- end }}
+set -ga terminal-overrides ",*256col*:Tc" # Enable true-color for compatible terminals
 
-# Enable 256-color and true-color (24-bit) support in tmux
-set -g default-terminal "screen-256color" # Set terminal type for 256-color support
-set -ga terminal-overrides ",*256col*:Tc" # Override to enable true-color for compatible terminals
+{{- if not $windows }}
 
 # List of plugins
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
 set -g @plugin 'hendrikmi/tmux-cpu-mem-monitor'
 # set -g @plugin "articicestudio/nord-tmux"
+{{- else }}
+
+# psmux does not run TPM, so set what tmux-sensible would.
+set -g display-time 4000
+set -g focus-events on
+set -g aggressive-resize on
+set -g status-keys emacs
+bind C-p previous-window
+bind C-n next-window
+bind R source-file ~/.tmux.conf \; display "~/.tmux.conf sourced!"
+{{- end }}
 
 set -g set-clipboard on
 set -g mode-keys vi
-set -g detach-on-destroy off
+{{- if not $windows }}
+set -g detach-on-destroy off # Not in psmux, where each session is its own server
+{{- end }}
 set -g escape-time 0
 set -g history-limit 1000000
 set -g mouse on
@@ -24,30 +49,28 @@ set -g status-interval 3
 set -g allow-passthrough off
 
 # Style
-# Colors are inlined rather than defined as tmux config variables (`name="value"`)
-# because psmux (the tmux-compatible multiplexer used on Windows) does not
-# support tmux's config-variable substitution -- `${name}` is left unexpanded.
-#   gray_light  #D8DEE9
-#   gray_dark   #3B4252
-#   cyan_soft   #88c0d0
-#   blue_muted  #81A1C1
-#   green_soft  #A3BE8C
-
 set -g base-index 0
 set -g status on
 set -g status-position top
 set -g status-format[0] "#{E:status-left}#[align=left,list=on]#{W:#{E:window-status-format},#{E:window-status-current-format}}#[nolist,align=right]#{E:status-right}"
 set -g status-left-length 100
 set -g status-right-length 100
-set -g status-style "fg=#D8DEE9,bg=default"
-set -g status-left "#[fg=#A3BE8C,bold]#S #[fg=#D8DEE9,nobold,nounderscore]| "
-set -g status-right "#(bash ~/.config/tmux/scripts/status-metric cpu 80 '#D8DEE9') #(bash ~/.config/tmux/scripts/status-metric mem 80 '#D8DEE9')#[fg=#D8DEE9,nobold,nounderscore]#(bash ~/.config/tmux/scripts/status-battery 20 '#D8DEE9' '#A3BE8C' red) #[fg=#D8DEE9,nobold,nounderscore]| #(bash ~/.config/tmux/scripts/status-identity '#D8DEE9' magenta colour220) "
-set -g window-status-current-format "#[fg=#88c0d0,bold,underscore]#I:#W#[fg=#D8DEE9,nobold,nounderscore] "
-set -g window-status-format "#[fg=#D8DEE9,nobold,nounderscore]#I:#W "
-set -g message-style "fg=#D8DEE9,bg=default"
-set -g mode-style "fg=#3B4252,bg=#81A1C1"
-set -g pane-border-style "fg=#3B4252"
-set -g pane-active-border-style "fg=#A3BE8C"
+set -g status-style "fg={{ $gray_light }},bg=default"
+set -g status-left "#[fg={{ $green_soft }},bold]#S #[fg={{ $gray_light }},nobold,nounderscore]| "
+{{- if $windows }}
+# Written by scripts/status-windows.ps1, started at the bottom of this file.
+# psmux runs #() through PowerShell unless it starts with cmd; cmd is far
+# cheaper to spawn every status-interval. The path must use backslashes.
+set -g status-right '#(cmd /c type {{ .chezmoi.homeDir | replace "/" "\\" }}\.cache\psmux-status-right.txt)'
+{{- else }}
+set -g status-right "#(~/.config/tmux/scripts/status-metric cpu 80 '{{ $gray_light }}') #(~/.config/tmux/scripts/status-metric mem 80 '{{ $gray_light }}')#[fg={{ $gray_light }},nobold,nounderscore]#(~/.config/tmux/scripts/status-battery 20 '{{ $gray_light }}' '{{ $green_soft }}' red) #[fg={{ $gray_light }},nobold,nounderscore]| #(~/.config/tmux/scripts/status-identity '{{ $gray_light }}' magenta colour220) "
+{{- end }}
+set -g window-status-current-format "#[fg={{ $cyan_soft }},bold,underscore]#I:#W#[fg={{ $gray_light }},nobold,nounderscore] "
+set -g window-status-format "#[fg={{ $gray_light }},nobold,nounderscore]#I:#W "
+set -g message-style "fg={{ $gray_light }},bg=default"
+set -g mode-style "fg={{ $gray_dark }},bg={{ $blue_muted }}"
+set -g pane-border-style "fg={{ $gray_dark }}"
+set -g pane-active-border-style "fg={{ $green_soft }}"
 
 # Resurrect
 set -g @resurrect-capture-pane-contents 'on'
@@ -72,7 +95,13 @@ bind C-l resize-pane -R 1
 bind -T copy-mode-vi v send -X begin-selection
 bind -T copy-mode-vi y send -X copy-selection-and-cancel
 
+{{- if $windows }}
+
+# Keep this at the very bottom: psmux runs the config's options and bindings
+# before the first command, and default-shell must apply to the first pane.
+run -b '~/.config/tmux/scripts/status-windows.ps1'
+{{- else }}
+
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-# Invoked via `bash` explicitly: psmux's run-shell does not execute scripts
-# through their shebang line the way real tmux (backed by a POSIX shell) does.
-run 'bash ~/.tmux/plugins/tpm/tpm'
+run '~/.tmux/plugins/tpm/tpm'
+{{- end }}

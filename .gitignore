@@ -24,7 +24,6 @@ dot_zprofile.local
 !private_dot_local/
 !private_dot_local/bin/
 !private_dot_local/bin/executable_dotfiles-fastfetch
-!private_dot_local/bin/executable_tmux
 
 !private_dot_config/
 !private_dot_config/alacritty/
@@ -59,3 +58,4 @@ dot_zprofile.local
 !private_dot_config/tmux/tmux.conf.tmpl
 !private_dot_config/tmux/scripts/
 !private_dot_config/tmux/scripts/executable_status-*
+!private_dot_config/tmux/scripts/status-windows.ps1
